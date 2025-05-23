@@ -111,7 +111,7 @@ while(iterator.hasNext())
 d=iterator.next();
 if(partialLeftSearch)
 {
-if(d.getTitle().toUpperCase().startsWith(title.toUpperCase()));
+if(d.getTitle().toUpperCase().startsWith(title.toUpperCase()))
 {
 return index;
 }
