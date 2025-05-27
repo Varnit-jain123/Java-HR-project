@@ -11,7 +11,7 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 
-public class DesignationUI extends JFrame implements DocumentListener
+public class DesignationUI extends JFrame implements DocumentListener,ListSelectionListener
 {
 private JLabel titleLabel;
 private JLabel searchLabel;
@@ -23,11 +23,15 @@ private JScrollPane scrollPane;
 private DesignationModel designationModel;
 private Container container;
 private DesignationPanel designationPanel;
+private enum MODES{VIEW,ADD,EDIT,DELETE,EXPORT_TO_PDF};
+private MODES mode;
 public DesignationUI()
 {
 initComponents();
 setAppearance();
 addListeners();
+setViewMode();
+designationPanel.setViewMode();
 }
 
 private void initComponents()
@@ -104,6 +108,8 @@ searchTextField.setText("");
 searchTextField.requestFocus();
 }
 });
+designationTable.getSelectionModel().addListSelectionListener(this);
+
 }
 private void searchDesignation()
 {
@@ -139,17 +145,306 @@ public void insertUpdate(DocumentEvent de)
 {
 searchDesignation();
 }
+public void valueChanged(ListSelectionEvent ev)
+{
+int selectedRowIndex=designationTable.getSelectedRow();
+try
+{
+DesignationInterface designation=designationModel.getDesignationAt(selectedRowIndex);
+designationPanel.setDesignation(designation);
+} catch(BLException blexception)
+{
+designationPanel.clearDesignation();
+}
+}
 
+private void setViewMode()
+{
+this.mode=MODES.VIEW;
+if(designationModel.getRowCount()==0)
+{
+searchTextField.setEnabled(false);
+clearSearchTextFieldButton.setEnabled(false);
+designationTable.setEnabled(false);
+}
+else
+{
+searchTextField.setEnabled(true);
+clearSearchTextFieldButton.setEnabled(true);
+designationTable.setEnabled(true);
+}
+}
+
+private void setAddMode()
+{
+this.mode=MODES.ADD;
+searchTextField.setEnabled(false);
+clearSearchTextFieldButton.setEnabled(false);
+designationTable.setEnabled(false);
+}
+
+private void setEditMode()
+{
+this.mode=MODES.EDIT;
+searchTextField.setEnabled(false);
+clearSearchTextFieldButton.setEnabled(false);
+designationTable.setEnabled(false);
+}
+
+private void setDeleteMode()
+{
+this.mode=MODES.DELETE;
+searchTextField.setEnabled(false);
+clearSearchTextFieldButton.setEnabled(false);
+designationTable.setEnabled(false);
+}
+
+private void setExportToPDFMode()
+{
+this.mode=MODES.EXPORT_TO_PDF;
+searchTextField.setEnabled(false);
+clearSearchTextFieldButton.setEnabled(false);
+designationTable.setEnabled(false);
+}
 
 
 //inner Class Starts
 class DesignationPanel extends JPanel
 {
+private JLabel titleCaptionLabel;
+private JLabel titleLabel;
+private JTextField titleTextField;
+private JButton clearTitleTextFieldButton;
+private JButton addButton;
+private JButton editButton;
+private JButton cancelButton;
+private JButton deleteButton;
+private JButton exportToPDFButton;
+private JPanel buttonsPanel;
+private DesignationInterface designation;
 DesignationPanel()
 {
 setBorder(BorderFactory.createLineBorder(new Color(140,140,140)));
+initComponents();
+setAppearance();
+addListeners();
+}
+public void setDesignation(DesignationInterface designation)
+{
+this.designation=designation;
+titleLabel.setText(designation.getTitle());
+}
+public void clearDesignation()
+{
+this.designation=null;
+titleLabel.setText("");
+}
+private void initComponents()
+{
+designation=null;
+titleCaptionLabel=new JLabel("Designation");
+titleLabel=new JLabel("");
+titleTextField=new JTextField();
+clearTitleTextFieldButton=new JButton("x");
+buttonsPanel=new JPanel();
+addButton=new JButton("A");
+editButton=new JButton("E");
+cancelButton=new JButton("C");
+deleteButton=new JButton("D");
+exportToPDFButton=new JButton("E");
+}
+private void setAppearance()
+{
+Font captionFont=new Font("Verdana",Font.BOLD,16);
+Font dataFont=new Font("Verdana",Font.PLAIN,16);
+titleCaptionLabel.setFont(captionFont);
+titleLabel.setFont(dataFont);
+titleTextField.setFont(dataFont);
+setLayout(null);
+int lm,tm;
+lm=0;
+tm=0;
+titleCaptionLabel.setBounds(lm+10,tm+10,110,30);
+titleLabel.setBounds(lm+110+5+5,tm+10,402,30);
+titleTextField.setBounds(lm+10+110+5,tm+10,lm+84+402-30-5-(lm+110+5)-15,30);
+clearTitleTextFieldButton.setBounds(lm+84+402-30-5,tm+10,30,30);
+buttonsPanel.setBounds(lm+84,tm+60,402,60);
+buttonsPanel.setBorder(BorderFactory.createLineBorder(new Color(165,165,165)));
+addButton.setBounds(56,10,50,40);
+editButton.setBounds(56+50+10,10,50,40);
+cancelButton.setBounds(56+50+10+50+10,10,50,40);
+deleteButton.setBounds(56+50+10+50+10+50+10,10,50,40);
+exportToPDFButton.setBounds(56+50+10+50+10+50+10+50+10,10,50,40);
+buttonsPanel.setLayout(null);
+buttonsPanel.add(addButton);
+buttonsPanel.add(editButton);
+buttonsPanel.add(cancelButton);
+buttonsPanel.add(deleteButton);
+buttonsPanel.add(exportToPDFButton);
+add(titleCaptionLabel);
+add(titleTextField);
+add(titleLabel);
+add(clearTitleTextFieldButton);
+add(buttonsPanel);
+}
+
+private void addDesignation()
+{
+String title=titleTextField.getText().trim();
+if(title.length()==0)
+{
+//?????
+}
+DesignationInterface d=new Designation();
+d.setTitle(title);
+try
+{
+designationModel.add(d);
+int rowIndex=0;
+try
+{
+rowIndex=designationModel.indexOfDesignation(d);
+} catch(BLException blException)
+{
+// do nothing
+}
+designationTable.setRowSelectionInterval(rowIndex,rowIndex);
+Rectangle rectangle=designationTable.getCellRect(rowIndex,0,true);
+designationTable.scrollRectToVisible(rectangle);
+} catch(BLException blException)
+{
+//????
 }
 }
 
+private void updateDesignation()
+{
+
+}
+
+
+private void addListeners()
+{
+this.addButton.addActionListener(new ActionListener(){
+public void actionPerformed(ActionEvent ev)
+{
+if(mode==MODES.VIEW)
+{
+setAddMode();
+}
+else
+{
+addDesignation();
+setViewMode();
+}
+}
+});
+this.editButton.addActionListener(new ActionListener(){
+public void actionPerformed(ActionEvent ev)
+{
+if(mode==MODES.VIEW)
+{
+setEditMode();
+}
+else
+{
+updateDesignation();
+setViewMode();
+}
+}
+});
+this.cancelButton.addActionListener(new ActionListener(){
+public void actionPerformed(ActionEvent ev)
+{
+setViewMode();
+}
+});
+
+}
+
+void setViewMode()
+{
+DesignationUI.this.setViewMode();
+this.addButton.setText("A");
+this.editButton.setText("E");
+this.titleTextField.setVisible(false);
+this.titleLabel.setVisible(true);
+this.addButton.setEnabled(true);
+this.cancelButton.setEnabled(false);
+this.clearTitleTextFieldButton.setVisible(false);
+if(designationModel.getRowCount()>0)
+{
+this.editButton.setEnabled(true);
+this.deleteButton.setEnabled(true);
+this.exportToPDFButton.setEnabled(true);
+}
+else
+{
+this.editButton.setEnabled(false);
+this.deleteButton.setEnabled(false);
+this.exportToPDFButton.setEnabled(false);
+}
+this.addButton.setEnabled(true);
+}
+
+void setAddMode()
+{
+DesignationUI.this.setAddMode();
+this.titleTextField.setText("");
+this.titleLabel.setVisible(false);
+this.clearTitleTextFieldButton.setVisible(true);
+this.titleTextField.setVisible(true);
+addButton.setText("S");
+editButton.setEnabled(false);
+cancelButton.setEnabled(true);
+deleteButton.setEnabled(false);
+exportToPDFButton.setEnabled(false);
+}
+
+void setEditMode()
+{
+if(designationTable.getSelectedRow()<0 || designationTable.getSelectedRow()>=designationModel.getRowCount())
+{
+JOptionPane.showMessageDialog(this,"Select designation to edit");
+return;
+}
+DesignationUI.this.setEditMode();
+this.titleTextField.setText(this.designation.getTitle());
+this.clearTitleTextFieldButton.setVisible(true);
+this.titleLabel.setVisible(false);
+this.titleTextField.setVisible(true);
+addButton.setEnabled(false);
+cancelButton.setEnabled(true);
+deleteButton.setEnabled(false);
+exportToPDFButton.setEnabled(false);
+editButton.setText("U");
+}
+
+void setDeleteMode()
+{
+if(designationTable.getSelectedRow()<0 || designationTable.getSelectedRow()>=designationModel.getRowCount())
+{
+JOptionPane.showMessageDialog(this,"Select designation to delete");
+return;
+}
+DesignationUI.this.setDeleteMode();
+addButton.setEnabled(false);
+editButton.setEnabled(false);
+cancelButton.setEnabled(false);
+deleteButton.setEnabled(false);
+exportToPDFButton.setEnabled(false);
+}
+
+void setExportToPDFMode()
+{
+DesignationUI.this.setExportToPDFMode();
+addButton.setEnabled(false);
+editButton.setEnabled(false);
+cancelButton.setEnabled(false);
+deleteButton.setEnabled(false);
+exportToPDFButton.setEnabled(false);
+}
+
+} //inner class ends
 
 }
