@@ -1,8 +1,8 @@
-import com.thinking.machines.hr.dl.exceptions.*;
-import com.thinking.machines.hr.dl.interfaces.dto.*;
-import com.thinking.machines.hr.dl.interfaces.dao.*;
-import com.thinking.machines.hr.dl.dto.*;
-import com.thinking.machines.hr.dl.dao.*;
+import com.varnit.jain.hr.dl.exceptions.*;
+import com.varnit.jain.hr.dl.interfaces.dto.*;
+import com.varnit.jain.hr.dl.interfaces.dao.*;
+import com.varnit.jain.hr.dl.dto.*;
+import com.varnit.jain.hr.dl.dao.*;
 public class DesignationGetByCodeTestCase
 {
 public static void main(String gg[])

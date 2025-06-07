@@ -1,12 +1,12 @@
-import com.thinking.machines.hr.bl.managers.*;
-import com.thinking.machines.hr.bl.interfaces.managers.*;
-import com.thinking.machines.hr.bl.interfaces.pojo.*;
-import com.thinking.machines.hr.bl.pojo.*;
-import com.thinking.machines.hr.bl.exceptions.*;
+import com.varnit.jain.hr.bl.managers.*;
+import com.varnit.jain.hr.bl.interfaces.managers.*;
+import com.varnit.jain.hr.bl.interfaces.pojo.*;
+import com.varnit.jain.hr.bl.pojo.*;
+import com.varnit.jain.hr.bl.exceptions.*;
 import java.util.*;
 import java.text.*;
 import java.math.*;
-import com.thinking.machines.enums.*;
+import com.varnit.jain.enums.*;
 class EmployeeManagerUpdateTestCase
 {
 public static void main(String gg[])

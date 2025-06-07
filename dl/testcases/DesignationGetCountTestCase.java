@@ -1,6 +1,6 @@
-import com.thinking.machines.hr.dl.exceptions.*;
-import com.thinking.machines.hr.dl.interfaces.dao.*;
-import com.thinking.machines.hr.dl.dao.*;
+import com.varnit.jain.hr.dl.exceptions.*;
+import com.varnit.jain.hr.dl.interfaces.dao.*;
+import com.varnit.jain.hr.dl.dao.*;
 public class DesignationGetCountTestCase
 {
 public static void main(String gg[])

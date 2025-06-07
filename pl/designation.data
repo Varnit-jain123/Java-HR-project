@@ -1,4 +1,4 @@
-31        
+37        
 27        
 1
 Clerk
@@ -24,8 +24,6 @@ Programmer
 Peon
 13
 Warden
-14
-Matron
 15
 Machinist
 16
@@ -40,17 +38,19 @@ Security officer
 Receptionist
 21
 Publicity Manager
-22
-Door keeper
 23
 Supervisor
 24
 Garden Superviser
-27
-Cartoonist
 29
 Watchman
 30
 Car washer
 31
-Zoo keeper
+Animal doctor
+32
+Computer operator
+34
+Professor
+37
+Salesman

@@ -1,7 +1,7 @@
 import java.awt.*;
 import javax.swing.*;
-import com.thinking.machines.hr.pl.model.*;
-import com.thinking.machines.hr.bl.exceptions.*;
+import com.varnit.jain.hr.pl.model.*;
+import com.varnit.jain.hr.bl.exceptions.*;
 
 class DesignationModelTestCase extends JFrame
 {
