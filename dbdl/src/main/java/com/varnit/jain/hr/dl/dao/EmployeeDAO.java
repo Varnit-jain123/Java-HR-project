@@ -7,11 +7,10 @@ import com.varnit.jain.enums.*;
 import java.util.*;	
 import java.math.*;
 import java.text.*; 
-import java.io.*;
+import java.sql.*;
+
 public class EmployeeDAO implements EmployeeDAOInterface
 {
-private static final String FILE_NAME="employee.data";
-
 public void add(EmployeeDTOInterface employeeDTO) throws DAOException
 {
 if(employeeDTO==null) throw new DAOException("Employee is null");
@@ -22,323 +21,417 @@ name=name.trim();
 if(name.length()==0) throw new DAOException("length of name is zero");
 int designationCode=employeeDTO.getDesignationCode();
 if(designationCode<=0) throw new DAOException("Invalid Designation code : "+designationCode);
-DesignationDAOInterface designationDAO;
-designationDAO=new DesignationDAO();
-boolean isDesignationCodeValid=designationDAO.codeExists(designationCode);
-if(isDesignationCodeValid==false) throw new DAOException("Invalid Designation code : "+designationCode);
-Date dateOfBirth=employeeDTO.getDateOfBirth();
-if(dateOfBirth==null) throw new DAOException("Date of birth is null");
+Connection connection=null;
+PreparedStatement preparedStatement;
+ResultSet resultSet;
+try{
+connection=DAOConnection.getConnection();
+preparedStatement=connection.prepareStatement("select code from designation where code=?");
+preparedStatement.setInt(1,designationCode);
+resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
+{
+resultSet.close();
+preparedStatement.close();
+connection.close();
+throw new DAOException("Invalid Designation code : "+designationCode);
+}
+resultSet.close();
+preparedStatement.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+java.util.Date dateOfBirth=employeeDTO.getDateOfBirth();
+if(dateOfBirth==null) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Date of birth is null");
+}
 char gender=employeeDTO.getGender();
-if(gender==' ') throw new DAOException("Gender not set to Male/Female");
+if(gender==' ')
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Gender not set to Male/Female");
+}
 boolean isIndian=employeeDTO.getIsIndian();
 BigDecimal basicSalary=employeeDTO.getBasicSalary();
-if(basicSalary==null) throw new DAOException("Basic salary is null");
-if(basicSalary.signum()==-1) throw new DAOException("Basic salary is negative");
+if(basicSalary==null) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Basic salary is null");
+}
+if(basicSalary.signum()==-1) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Basic salary is negative");
+}
 String panNumber=employeeDTO.getPANNumber();
-if(panNumber==null) throw new DAOException("PAN number is null");
+if(panNumber==null) 
+{
+try {	
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("PAN number is null");
+}
 panNumber=panNumber.trim();
-if(panNumber.length()==0) throw new DAOException("length of PAN number is zero");
+if(panNumber.length()==0) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("length of PAN number is zero");
+}
 String aadharCardNumber=employeeDTO.getAadharCardNumber();
-if(aadharCardNumber==null) throw new DAOException("aadhar card number is null");
+if(aadharCardNumber==null) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("aadhar card number is null");
+}
 aadharCardNumber=aadharCardNumber.trim();
-if(aadharCardNumber.length()==0) throw new DAOException("length of aadhar card number is zero");
+if(aadharCardNumber.length()==0) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("length of aadhar card number is zero");
+}
 try{
-int lastGeneratedEmployeeId=10000000;
-String lastGeneratedEmployeeIdString="";
-int recordCount=0;
-String recordCountString="";
-File file=new File(FILE_NAME);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-lastGeneratedEmployeeIdString=String.format("%-10s","10000000");
-randomAccessFile.writeBytes(lastGeneratedEmployeeIdString+"\n");
-recordCountString=String.format("%-10s","0");
-randomAccessFile.writeBytes(recordCountString+"\n");
-}
-else
-{
-lastGeneratedEmployeeId=Integer.parseInt(randomAccessFile.readLine().trim());
-recordCount=Integer.parseInt(randomAccessFile.readLine().trim());
-}
-boolean panNumberExists,aadharCardNumberExists;
-panNumberExists=false;
-aadharCardNumberExists=false;
-String fPANNumber;
-String fAadharCardNumber;
-int x;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-for(x=1;x<=7;x++) randomAccessFile.readLine();
-fPANNumber=randomAccessFile.readLine();
-fAadharCardNumber=randomAccessFile.readLine();
-if(panNumberExists==false && fPANNumber.equalsIgnoreCase(panNumber))
-{
-panNumberExists=true;
-}
-if(aadharCardNumberExists==false && fAadharCardNumber.equalsIgnoreCase(aadharCardNumber))
-{
-aadharCardNumberExists=true;
-}
-if(panNumberExists && aadharCardNumberExists) break;
-}
+boolean panNumberExists;
+preparedStatement=connection.prepareStatement("select gender from employee where pan_Number=?");
+preparedStatement.setString(1,panNumber);
+resultSet=preparedStatement.executeQuery();
+panNumberExists=resultSet.next();
+resultSet.close();
+preparedStatement.close();
+boolean aadharCardNumberExists;
+preparedStatement=connection.prepareStatement("select gender from  employee where aadhar_card_Number=?");
+preparedStatement.setString(1,aadharCardNumber);
+resultSet=preparedStatement.executeQuery();
+aadharCardNumberExists=resultSet.next();
+resultSet.close();
+preparedStatement.close();
 if(panNumberExists && aadharCardNumberExists)
 {
-randomAccessFile.close(); 
+try{
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 throw new DAOException("PAN number ("+panNumber+") and Aadhar card number ("+aadharCardNumber+") exists");
 }
 if(panNumberExists)
 {
-randomAccessFile.close();
+try{
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 throw new DAOException("PAN number ("+panNumber+") exists");
 }
 if(aadharCardNumberExists)
 {
-randomAccessFile.close();
+try{
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 throw new DAOException("Aadhar card number ("+aadharCardNumber+") exists");
 }
-lastGeneratedEmployeeId++;
-employeeId="A"+lastGeneratedEmployeeId;
-recordCount++;
-randomAccessFile.writeBytes(employeeId+"\n");
-randomAccessFile.writeBytes(name+"\n");
-randomAccessFile.writeBytes(designationCode+"\n");
-SimpleDateFormat simpleDateFormat; 	
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-randomAccessFile.writeBytes(simpleDateFormat.format(dateOfBirth)+"\n");
-randomAccessFile.writeBytes(gender+"\n");
-randomAccessFile.writeBytes(isIndian+"\n");
-randomAccessFile.writeBytes(basicSalary.toPlainString()+"\n");
-randomAccessFile.writeBytes(panNumber+"\n");
-randomAccessFile.writeBytes(aadharCardNumber+"\n");
-randomAccessFile.seek(0);
-lastGeneratedEmployeeIdString=String.format("%-10d",lastGeneratedEmployeeId);
-recordCountString=String.format("%-10d",recordCount);
-randomAccessFile.writeBytes(lastGeneratedEmployeeIdString+"\n");
-randomAccessFile.writeBytes(recordCountString+"\n");
-randomAccessFile.close();
-employeeDTO.setEmployeeId(employeeId);
-}catch(IOException ioException)
+preparedStatement=connection.prepareStatement("insert into employee (name,designation_code,date_of_birth,basic_salary,gender,is_indian,pan_Number,aadhar_card_Number) values (?,?,?,?,?,?,?,?)",Statement.RETURN_GENERATED_KEYS);
+preparedStatement.setString(1,name);
+preparedStatement.setInt(2,designationCode);
+java.sql.Date sqlDateOfBirth=new java.sql.Date(dateOfBirth.getYear(),dateOfBirth.getMonth(),dateOfBirth.getDate()); // different date class for sql database not taken date class of java.util
+preparedStatement.setDate(3,sqlDateOfBirth);
+preparedStatement.setBigDecimal(4,basicSalary);
+preparedStatement.setString(5,String.valueOf(gender));
+preparedStatement.setBoolean(6,isIndian);
+preparedStatement.setString(7,panNumber);
+preparedStatement.setString(8,aadharCardNumber);
+preparedStatement.executeUpdate();
+resultSet=preparedStatement.getGeneratedKeys();
+resultSet.next();
+int generatedEmployeeId=resultSet.getInt(1);
+resultSet.close();
+preparedStatement.close();
+connection.close();
+employeeDTO.setEmployeeId("A"+(1000000+generatedEmployeeId));
+} catch(SQLException sqlException)
 {
-throw new DAOException(ioException.getMessage());
+throw new DAOException(sqlException.getMessage());
 }
 }
 
 public void update(EmployeeDTOInterface employeeDTO) throws DAOException
 {
 if(employeeDTO==null) throw new DAOException("Employee is null");
-String employeeId=employeeDTO.getEmployeeId();
-if(employeeId==null ) throw new DAOException("Employee id is null");
-if(employeeId.length()==0) throw new DAOException("Length of name is zero"); 
+String employeeId;
+employeeId=employeeDTO.getEmployeeId();
+if(employeeId==null) throw new DAOException("Employee Id. is null");
+employeeId.trim();
+if(employeeId.length()==0) throw new DAOException("length of employee Id. is zero");
+int actualEmployeeId;
+try {
+actualEmployeeId=Integer.parseInt(employeeId.substring(1))-100000;
+} catch(Exception exception)
+{
+throw new DAOException("Invalid employee Id.");
+}
 String name=employeeDTO.getName();
 if(name==null) throw new DAOException("Name is null");
 name=name.trim();
 if(name.length()==0) throw new DAOException("length of name is zero");
 int designationCode=employeeDTO.getDesignationCode();
 if(designationCode<=0) throw new DAOException("Invalid Designation code : "+designationCode);
-DesignationDAOInterface designationDAO;
-designationDAO=new DesignationDAO();
-boolean isDesignationCodeValid=designationDAO.codeExists(designationCode);
-if(isDesignationCodeValid==false) throw new DAOException("Invalid Designation code : "+designationCode);
-Date dateOfBirth=employeeDTO.getDateOfBirth();
-if(dateOfBirth==null) throw new DAOException("Date of birth is null");
+Connection connection=null;
+PreparedStatement preparedStatement;
+ResultSet resultSet;
+try{
+connection=DAOConnection.getConnection();
+preparedStatement=connection.prepareStatement("select code from designation where code=?");
+preparedStatement.setInt(1,designationCode);
+resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
+{
+resultSet.close();
+preparedStatement.close();
+connection.close();
+throw new DAOException("Invalid Designation code : "+designationCode);
+}
+resultSet.close();
+preparedStatement.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+java.util.Date dateOfBirth=employeeDTO.getDateOfBirth();
+if(dateOfBirth==null) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Date of birth is null");
+}
 char gender=employeeDTO.getGender();
-if(gender==' ') throw new DAOException("Gender not set to Male/Female");
+if(gender==' ')
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Gender not set to Male/Female");
+}
 boolean isIndian=employeeDTO.getIsIndian();
 BigDecimal basicSalary=employeeDTO.getBasicSalary();
-if(basicSalary==null) throw new DAOException("Basic salary is null");
-if(basicSalary.signum()==-1) throw new DAOException("Basic salary is negative");
+if(basicSalary==null) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Basic salary is null");
+}
+if(basicSalary.signum()==-1) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("Basic salary is negative");
+}
 String panNumber=employeeDTO.getPANNumber();
-if(panNumber==null) throw new DAOException("PAN number is null");
+if(panNumber==null) 
+{
+try {	
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("PAN number is null");
+}
 panNumber=panNumber.trim();
-if(panNumber.length()==0) throw new DAOException("length of PAN number is zero");
+if(panNumber.length()==0) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("length of PAN number is zero");
+}
 String aadharCardNumber=employeeDTO.getAadharCardNumber();
-if(aadharCardNumber==null) throw new DAOException("aadhar card number is null");
+if(aadharCardNumber==null) 
+{
+try {
+connection.close();
+} catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+throw new DAOException("aadhar card number is null");
+}
 aadharCardNumber=aadharCardNumber.trim();
-if(aadharCardNumber.length()==0) throw new DAOException("length of aadhar card number is zero");
-try
+if(aadharCardNumber.length()==0) 
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) throw new DAOException("Invalid employee id. : "+employeeId);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
+try {
+connection.close();
+} catch(SQLException sqlException)
 {
-randomAccessFile.close();
-throw new DAOException("Invalid employee id. : "+employeeId);
+throw new DAOException(sqlException.getMessage());
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-SimpleDateFormat simpleDateFormat;
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-String fEmployeeId;
-String fName;
-int fDesignationCode;
-Date fDateOfBirth;
-char fGender;
-boolean fIsIndian;
-BigDecimal fBasicSalary;
-String fPANNumber;
-String fAadharCardNumber;
-int x;
-boolean employeeIdFound=false;
-boolean panNumberFound=false;
-boolean aadharCardNumberFound=false;
-String panNumberFoundAgainstEmployeeId="";
-String aadharCardNumberFoundAgainstEmployeeId="";
-long foundAt=0;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-if(employeeIdFound==false) foundAt=randomAccessFile.getFilePointer();
-fEmployeeId=randomAccessFile.readLine();
-for(x=1;x<=6;x++) randomAccessFile.readLine();
-fPANNumber=randomAccessFile.readLine();
-fAadharCardNumber=randomAccessFile.readLine();
-if(employeeIdFound==false && fEmployeeId.equalsIgnoreCase(employeeId))
-{
-employeeIdFound=true;
+throw new DAOException("length of aadhar card number is zero");
 }
-if(panNumberFound==false && fPANNumber.equalsIgnoreCase(panNumber))
-{
-panNumberFound=true;
-panNumberFoundAgainstEmployeeId=fEmployeeId;
-}
-if(aadharCardNumberFound==false && fAadharCardNumber.equalsIgnoreCase(aadharCardNumber))
-{
-aadharCardNumberFound=true;
-aadharCardNumberFoundAgainstEmployeeId=fEmployeeId;
-}
-if(employeeIdFound && panNumberFound && aadharCardNumberFound) break;
-}
-if(employeeIdFound==false)
-{
-randomAccessFile.close();
-throw new DAOException("Invalid employee id. : "+employeeId);
-}
-boolean panNumberExists=false;
-if(panNumberFound && panNumberFoundAgainstEmployeeId.equalsIgnoreCase(employeeId)==false)
-{
-panNumberExists=true;
-}
-boolean aadharCardNumberExists=false;
-if(aadharCardNumberFound && aadharCardNumberFoundAgainstEmployeeId.equalsIgnoreCase(employeeId)==false)
-{
-aadharCardNumberExists=true;
-}
+try{
+boolean panNumberExists;
+preparedStatement=connection.prepareStatement("select gender from employee where pan_Number=? and employee_id!=?");
+preparedStatement.setString(1,panNumber);
+preparedStatement.setInt(2,actualEmployeeId);
+resultSet=preparedStatement.executeQuery();
+panNumberExists=resultSet.next();
+resultSet.close();
+preparedStatement.close();
+boolean aadharCardNumberExists;
+preparedStatement=connection.prepareStatement("select gender from  employee where aadhar_card_Number=? and employee_id!=?");
+preparedStatement.setString(1,aadharCardNumber);
+preparedStatement.setInt(2,actualEmployeeId);
+resultSet=preparedStatement.executeQuery();
+aadharCardNumberExists=resultSet.next();
+resultSet.close();
+preparedStatement.close();
 if(panNumberExists && aadharCardNumberExists)
 {
-randomAccessFile.close(); 
+try{
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 throw new DAOException("PAN number ("+panNumber+") and Aadhar card number ("+aadharCardNumber+") exists");
 }
 if(panNumberExists)
 {
-randomAccessFile.close();
+try{
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 throw new DAOException("PAN number ("+panNumber+") exists");
 }
 if(aadharCardNumberExists)
 {
-randomAccessFile.close();
+try{
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 throw new DAOException("Aadhar card number ("+aadharCardNumber+") exists");
 }
-randomAccessFile.seek(foundAt);
-for(x=1;x<=9;x++) randomAccessFile.readLine();
-File tmpFile=new File("tmp.tmp");
-if(tmpFile.exists()) tmpFile.delete();
-RandomAccessFile tmpRandomAccessFile;
-tmpRandomAccessFile=new RandomAccessFile(tmpFile,"rw");
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
+preparedStatement=connection.prepareStatement("update employee set name=?,designation_code=?,date_of_birth=?,basic_salary=?,gender=?,is_indian=?,pan_Number=?,aadhar_card_Number=?) where employee_id=?");
+preparedStatement.setString(1,name);
+preparedStatement.setInt(2,designationCode);
+java.sql.Date sqlDateOfBirth=new java.sql.Date(dateOfBirth.getYear(),dateOfBirth.getMonth(),dateOfBirth.getDate()); // different date class for sql database not taken date class of java.util
+preparedStatement.setDate(3,sqlDateOfBirth);
+preparedStatement.setBigDecimal(4,basicSalary);
+preparedStatement.setString(5,String.valueOf(gender));
+preparedStatement.setBoolean(6,isIndian);
+preparedStatement.setString(7,panNumber);
+preparedStatement.setString(8,aadharCardNumber);
+preparedStatement.setInt(9,actualEmployeeId);
+preparedStatement.executeUpdate();
+preparedStatement.close();
+connection.close();
+} catch(SQLException sqlException)
 {
-tmpRandomAccessFile.writeBytes(randomAccessFile.readLine()+"\n");
-}
-randomAccessFile.seek(foundAt);
-randomAccessFile.writeBytes(employeeId+"\n");
-randomAccessFile.writeBytes(name+"\n");
-randomAccessFile.writeBytes(designationCode+"\n");
-randomAccessFile.writeBytes(simpleDateFormat.format(dateOfBirth)+"\n");
-randomAccessFile.writeBytes(gender+"\n");
-randomAccessFile.writeBytes(isIndian+"\n");
-randomAccessFile.writeBytes(basicSalary.toPlainString()+"\n");
-randomAccessFile.writeBytes(panNumber+"\n");
-randomAccessFile.writeBytes(aadharCardNumber+"\n");
-tmpRandomAccessFile.seek(0);
-while(tmpRandomAccessFile.getFilePointer()<tmpRandomAccessFile.length())
-{
-randomAccessFile.writeBytes(tmpRandomAccessFile.readLine()+"\n");
-}
-randomAccessFile.setLength(randomAccessFile.getFilePointer());
-tmpRandomAccessFile.setLength(0);
-randomAccessFile.close();
-tmpRandomAccessFile.close();
-}catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
+throw new DAOException(sqlException.getMessage());
 }
 }
 
 public void delete(String employeeId) throws DAOException
 {
-if(employeeId==null ) throw new DAOException("Employee id is null");
-if(employeeId.length()==0) throw new DAOException("Length of name is zero"); 
-try
+if(employeeId==null) throw new DAOException("Employee Id. is null");
+employeeId.trim();
+if(employeeId.length()==0) throw new DAOException("length of employee Id. is zero");
+int actualEmployeeId;
+try {
+actualEmployeeId=Integer.parseInt(employeeId.substring(1))-100000;
+} catch(Exception exception)
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) throw new DAOException("Invalid employee id. : "+employeeId);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-randomAccessFile.close();
-throw new DAOException("Invalid employee id. : "+employeeId);
+throw new DAOException("Invalid employee Id.");
 }
-randomAccessFile.readLine();
-int recordCount=Integer.parseInt(randomAccessFile.readLine().trim());
-String fEmployeeId;
-int x;
-boolean employeeIdFound=false;
-long foundAt=0;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+ResultSet resultSet;
+try{
+preparedStatement=connection.prepareStatement("select gender from employee where employee_id=?");
+preparedStatement.setInt(1,actualEmployeeId);
+resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
 {
-foundAt=randomAccessFile.getFilePointer();
-fEmployeeId=randomAccessFile.readLine();
-for(x=1;x<=8;x++) randomAccessFile.readLine();
-if(employeeIdFound==false && fEmployeeId.equalsIgnoreCase(employeeId))
-{
-employeeIdFound=true;
-break;
+resultSet.close();
+preparedStatement.close();
+connection.close();
+throw new DAOException("Invalid employee Id. : "+employeeId);
 }
-}
-if(employeeIdFound==false)
+resultSet.close();
+preparedStatement.close();
+preparedStatement=connection.prepareStatement("delete from employee where employee_id=?");
+preparedStatement.setInt(1,actualEmployeeId);
+preparedStatement.executeUpdate();
+preparedStatement.close();
+connection.close();
+} catch(SQLException sqlException)
 {
-randomAccessFile.close();
-throw new DAOException("Invalid employee id. : "+employeeId);
-}
-File tmpFile=new File("tmp.tmp");
-if(tmpFile.exists()) tmpFile.delete();
-RandomAccessFile tmpRandomAccessFile;
-tmpRandomAccessFile=new RandomAccessFile(tmpFile,"rw");
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-tmpRandomAccessFile.writeBytes(randomAccessFile.readLine()+"\n");
-}
-randomAccessFile.seek(foundAt);
-tmpRandomAccessFile.seek(0);
-while(tmpRandomAccessFile.getFilePointer()<tmpRandomAccessFile.length())
-{
-randomAccessFile.writeBytes(tmpRandomAccessFile.readLine()+"\n");
-}
-randomAccessFile.setLength(randomAccessFile.getFilePointer());
-recordCount--;
-String recordCountString=String.format("%-10d",recordCount);
-randomAccessFile.seek(0);
-randomAccessFile.readLine();
-randomAccessFile.writeBytes(recordCountString+"\n");
-randomAccessFile.close();
-tmpRandomAccessFile.setLength(0);
-tmpRandomAccessFile.close();
-}catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
+throw new DAOException(sqlException.getMessage());
 }
 }
 
@@ -347,168 +440,137 @@ public Set<EmployeeDTOInterface> getAll() throws DAOException
 Set<EmployeeDTOInterface> employees=new TreeSet<>();
 try
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) return employees;
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0) 
-{
-randomAccessFile.close();
-return employees;
-}
-randomAccessFile.readLine();
-randomAccessFile.readLine();
+Connection connection=DAOConnection.getConnection();
+Statement statement=connection.createStatement();
+ResultSet resultSet=statement.executeQuery("select * from employee");
 EmployeeDTOInterface employeeDTO;
-SimpleDateFormat simpleDateFormat;
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-char fGender;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
+java.util.Date utilDateOfBirth;
+java.sql.Date sqlDateOfBirth;
+String gender;
+while(resultSet.next())
 {
 employeeDTO=new EmployeeDTO();
-employeeDTO.setEmployeeId(randomAccessFile.readLine());
-employeeDTO.setName(randomAccessFile.readLine());
-employeeDTO.setDesignationCode(Integer.parseInt(randomAccessFile.readLine()));
-try
-{
-employeeDTO.setDateOfBirth(simpleDateFormat.parse(randomAccessFile.readLine()));
-} catch(ParseException pe)
-{
-// do nothing
-}
-fGender=randomAccessFile.readLine().charAt(0);
-if(fGender=='M')
+employeeDTO.setEmployeeId("A"+(1000000+resultSet.getInt("employee_id")));
+employeeDTO.setName(resultSet.getString("name").trim());
+employeeDTO.setDesignationCode(resultSet.getInt("designation_code"));
+sqlDateOfBirth=resultSet.getDate("date_of_birth");
+utilDateOfBirth=new java.util.Date(sqlDateOfBirth.getYear(),sqlDateOfBirth.getMonth(),sqlDateOfBirth.getDate());
+employeeDTO.setDateOfBirth(utilDateOfBirth);
+employeeDTO.setBasicSalary(resultSet.getBigDecimal("basic_salary"));
+gender=resultSet.getString("gender");
+if(gender.equals("M"))
 {
 employeeDTO.setGender(GENDER.MALE);
 }
-if(fGender=='F')
+if(gender.equals("F"))
 {
 employeeDTO.setGender(GENDER.FEMALE);
 }
-employeeDTO.setIsIndian(Boolean.parseBoolean(randomAccessFile.readLine()));
-employeeDTO.setBasicSalary(new BigDecimal(randomAccessFile.readLine()));
-employeeDTO.setPANNumber(randomAccessFile.readLine());
-employeeDTO.setAadharCardNumber(randomAccessFile.readLine());
+employeeDTO.setIsIndian(resultSet.getBoolean("is_indian"));
+employeeDTO.setPANNumber(resultSet.getString("pan_Number").trim());
+employeeDTO.setAadharCardNumber(resultSet.getString("aadhar_card_Number").trim());
 employees.add(employeeDTO);
 }
-randomAccessFile.close();
-return employees;
-} catch(IOException ioException)
+resultSet.close();
+statement.close();
+connection.close();
+} catch(SQLException sqlException)
 {
-throw new DAOException(ioException.getMessage());
+throw new DAOException(sqlException.getMessage());
 }
+return employees;
 }
 
 public Set<EmployeeDTOInterface> getByDesignationCode(int designationCode) throws DAOException
 {
-if(new DesignationDAO().codeExists(designationCode)==false)
+Set<EmployeeDTOInterface> employees=new TreeSet<>();
+try{
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select code from designation where code=?");
+preparedStatement.setInt(1,designationCode);
+ResultSet resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
 {
+resultSet.close();
+preparedStatement.close();
+connection.close();
 throw new DAOException("Invalid designation code : "+designationCode);
 }
-Set<EmployeeDTOInterface> employees=new TreeSet<>();
-try
-{
-File file=new File(FILE_NAME);
-if(file.exists()==false) return employees;
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0) 
-{
-randomAccessFile.close();
-return employees;
-}
-randomAccessFile.readLine();
-randomAccessFile.readLine();
+resultSet.close();
+preparedStatement.close();
+preparedStatement=connection.prepareStatement("select * from employee where designation code=?");
+preparedStatement.setInt(1,designationCode);
+resultSet=preparedStatement.executeQuery();
 EmployeeDTOInterface employeeDTO;
-SimpleDateFormat simpleDateFormat;
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-String fEmployeeId;
-String fName;
-int fDesignationCode;
-int x;
-char fGender;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
+java.util.Date utilDateOfBirth;
+java.sql.Date sqlDateOfBirth;
+String gender;
+while(resultSet.next())
 {
-fEmployeeId=randomAccessFile.readLine();
-fName=randomAccessFile.readLine();
-fDesignationCode=Integer.parseInt(randomAccessFile.readLine());
-if(fDesignationCode!=designationCode)
-{
-for(x=1;x<=6;x++) randomAccessFile.readLine();
-continue;
-}
 employeeDTO=new EmployeeDTO();
-employeeDTO.setEmployeeId(fEmployeeId);
-employeeDTO.setName(fName);
-employeeDTO.setDesignationCode(fDesignationCode);
-try
-{
-employeeDTO.setDateOfBirth(simpleDateFormat.parse(randomAccessFile.readLine()));
-} catch(ParseException pe)
-{
-// do nothing
-}
-fGender=randomAccessFile.readLine().charAt(0);
-if(fGender=='M')
+employeeDTO.setEmployeeId("A"+(1000000+resultSet.getInt("employee_id")));
+employeeDTO.setName(resultSet.getString("name").trim());
+employeeDTO.setDesignationCode(resultSet.getInt("designation_code"));
+sqlDateOfBirth=resultSet.getDate("date_of_birth");
+utilDateOfBirth=new java.util.Date(sqlDateOfBirth.getYear(),sqlDateOfBirth.getMonth(),sqlDateOfBirth.getDate());
+employeeDTO.setDateOfBirth(utilDateOfBirth);
+employeeDTO.setBasicSalary(resultSet.getBigDecimal("basic_salary"));
+gender=resultSet.getString("gender");
+if(gender.equals("M"))
 {
 employeeDTO.setGender(GENDER.MALE);
 }
-if(fGender=='F')
+if(gender.equals("F"))
 {
 employeeDTO.setGender(GENDER.FEMALE);
 }
-employeeDTO.setIsIndian(Boolean.parseBoolean(randomAccessFile.readLine()));
-employeeDTO.setBasicSalary(new BigDecimal(randomAccessFile.readLine()));
-employeeDTO.setPANNumber(randomAccessFile.readLine());
-employeeDTO.setAadharCardNumber(randomAccessFile.readLine());
+employeeDTO.setIsIndian(resultSet.getBoolean("is_indian"));
+employeeDTO.setPANNumber(resultSet.getString("pan_Number").trim());
+employeeDTO.setAadharCardNumber(resultSet.getString("aadhar_card_Number").trim());
 employees.add(employeeDTO);
 }
-randomAccessFile.close();
-return employees;
-} catch(IOException ioException)
+resultSet.close();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
 {
-throw new DAOException(ioException.getMessage());
+throw new DAOException(sqlException.getMessage());
 }
+return employees;
 }
+
 
 public boolean isDesignationAlloted(int designationCode) throws DAOException
 {
-if(new DesignationDAO().codeExists(designationCode)==false)
+boolean designationAlloted=false;
+try{
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select code from designation where code=?");
+preparedStatement.setInt(1,designationCode);
+ResultSet resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
 {
+resultSet.close();
+preparedStatement.close();
+connection.close();
 throw new DAOException("Invalid designation code : "+designationCode);
 }
-try
+resultSet.close();
+preparedStatement.close();
+preparedStatement=connection.prepareStatement("select gender from employee where designation code=?");
+preparedStatement.setInt(1,designationCode);
+resultSet=preparedStatement.executeQuery();
+designationAlloted=resultSet.next();
+resultSet.close();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) return false;
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0) 
-{
-randomAccessFile.close();
-return false;
+throw new DAOException(sqlException.getMessage());
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-int fDesignationCode;
-int x;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-fDesignationCode=Integer.parseInt(randomAccessFile.readLine());
-if(fDesignationCode==designationCode)
-{
-randomAccessFile.close();
-return true;
-}
-for(x=1;x<=6;x++) randomAccessFile.readLine();
-}
-randomAccessFile.close();
-return false;
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
+return designationAlloted;
 }
 
 public EmployeeDTOInterface getByEmployeeId(String employeeId) throws DAOException
@@ -516,56 +578,61 @@ public EmployeeDTOInterface getByEmployeeId(String employeeId) throws DAOExcepti
 if(employeeId==null) throw new DAOException("Invalid employee id. : "+employeeId);
 employeeId=employeeId.trim();
 if(employeeId.length()==0) throw new DAOException("Invalid employee id. : employee id length is zero");
-try
+int actualEmployeeId=0;
+EmployeeDTOInterface employeeDTO=null;
+try{
+actualEmployeeId=Integer.parseInt(employeeId.substring(1))-1000000;
+} catch(Exception exception)
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) throw new DAOException("Invalid employee Id. : "+employeeId);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-randomAccessFile.close();
-throw new DAOException("Invalid employee id. : "+employeeId);
+throw new DAOException("Invalid Employee Id. : "+employeeId);
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-EmployeeDTOInterface employeeDTO;
-String fEmployeeId;
-int x;
-SimpleDateFormat simpleDateFormat;
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
+try{
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select * from employee where employee_id=?");
+preparedStatement.setInt(1,actualEmployeeId);
+ResultSet resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
 {
-fEmployeeId=randomAccessFile.readLine();
-if(fEmployeeId.equalsIgnoreCase(employeeId))
+resultSet.close();
+preparedStatement.close();
+connection.close();
+throw new DAOException("Invalid employee Id. : "+employeeId);
+}
+java.util.Date utilDateOfBirth;
+java.sql.Date sqlDateOfBirth;
+String gender;
+while(resultSet.next())
 {
 employeeDTO=new EmployeeDTO();
-employeeDTO.setEmployeeId(fEmployeeId);
-employeeDTO.setName(randomAccessFile.readLine());
-employeeDTO.setDesignationCode(Integer.parseInt(randomAccessFile.readLine()));
-try 
+employeeDTO.setEmployeeId("A"+(1000000+resultSet.getInt("employee_id")));
+employeeDTO.setName(resultSet.getString("name").trim());
+employeeDTO.setDesignationCode(resultSet.getInt("designation_code"));
+sqlDateOfBirth=resultSet.getDate("date_of_birth");
+utilDateOfBirth=new java.util.Date(sqlDateOfBirth.getYear(),sqlDateOfBirth.getMonth(),sqlDateOfBirth.getDate());
+employeeDTO.setDateOfBirth(utilDateOfBirth);
+employeeDTO.setBasicSalary(resultSet.getBigDecimal("basic_salary"));
+gender=resultSet.getString("gender");
+if(gender.equals("M"))
 {
-employeeDTO.setDateOfBirth(simpleDateFormat.parse(randomAccessFile.readLine()));
-} catch(ParseException parseException)
-{
-// do nothing
+employeeDTO.setGender(GENDER.MALE);
 }
-employeeDTO.setGender((randomAccessFile.readLine().charAt(0)=='M') ? GENDER.MALE : GENDER.FEMALE);
-employeeDTO.setIsIndian(Boolean.parseBoolean(randomAccessFile.readLine()));
-employeeDTO.setBasicSalary(new BigDecimal(randomAccessFile.readLine()));
-employeeDTO.setPANNumber(randomAccessFile.readLine());
-employeeDTO.setAadharCardNumber(randomAccessFile.readLine());
-randomAccessFile.close();
+if(gender.equals("F"))
+{
+employeeDTO.setGender(GENDER.FEMALE);
+}
+employeeDTO.setIsIndian(resultSet.getBoolean("is_indian"));
+employeeDTO.setPANNumber(resultSet.getString("pan_Number").trim());
+employeeDTO.setAadharCardNumber(resultSet.getString("aadhar_card_Number").trim());
+}
+resultSet.close();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
 return employeeDTO;
-}
-for(x=1;x<=8;x++) randomAccessFile.readLine();
-}
-randomAccessFile.close();
-throw new DAOException("invalid Employee id. : "+employeeId);
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
 }
 
 public EmployeeDTOInterface getByPANNumber(String panNumber) throws DAOException
@@ -573,71 +640,54 @@ public EmployeeDTOInterface getByPANNumber(String panNumber) throws DAOException
 if(panNumber==null) throw new DAOException("Invalid PAN number : "+panNumber);
 panNumber=panNumber.trim();
 if(panNumber.length()==0) throw new DAOException("Invalid PAN number. : PAN number length is zero");
-try
-{
-File file=new File(FILE_NAME);
-if(file.exists()==false) throw new DAOException("Invalid PAN number : "+panNumber);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-randomAccessFile.close();
-throw new DAOException("Invalid PAN number : "+panNumber);
-}
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-EmployeeDTOInterface employeeDTO;
-String fEmployeeId;
-String fName;
-int fDesignationCode;
-Date fDateOfBirth;
-char fGender;
-boolean fIsIndian;
-BigDecimal fBasicSalary;
-String fPANNumber;
-String fAadharCardNumber;
-int x;
-SimpleDateFormat simpleDateFormat;
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-fDateOfBirth=null;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-fEmployeeId=randomAccessFile.readLine();
-fName=randomAccessFile.readLine();
-fDesignationCode=Integer.parseInt(randomAccessFile.readLine());
+EmployeeDTOInterface employeeDTO=null;
 try{
-fDateOfBirth=simpleDateFormat.parse(randomAccessFile.readLine());
-} catch(ParseException parseException)
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select * from employee where pan_Number=?");
+preparedStatement.setString(1,panNumber);
+ResultSet resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
 {
-//do nothing
+resultSet.close();
+preparedStatement.close();
+connection.close();
+throw new DAOException("Invalid PAN Number : "+panNumber);
 }
-fGender=randomAccessFile.readLine().charAt(0);
-fIsIndian=Boolean.parseBoolean(randomAccessFile.readLine());
-fBasicSalary=new BigDecimal(randomAccessFile.readLine());
-fPANNumber=randomAccessFile.readLine();
-fAadharCardNumber=randomAccessFile.readLine();
-if(fPANNumber.equalsIgnoreCase(panNumber))
+java.util.Date utilDateOfBirth;
+java.sql.Date sqlDateOfBirth;
+String gender;
+while(resultSet.next())
 {
 employeeDTO=new EmployeeDTO();
-employeeDTO.setEmployeeId(fEmployeeId);
-employeeDTO.setName(fName);
-employeeDTO.setDesignationCode(fDesignationCode);
-employeeDTO.setDateOfBirth(fDateOfBirth);
-employeeDTO.setGender((fGender=='M') ? GENDER.MALE : GENDER.FEMALE);
-employeeDTO.setIsIndian(fIsIndian);
-employeeDTO.setBasicSalary(fBasicSalary);
-employeeDTO.setPANNumber(fPANNumber);
-employeeDTO.setAadharCardNumber(fAadharCardNumber);
-randomAccessFile.close();
-return employeeDTO;
-}
-}
-randomAccessFile.close();
-throw new DAOException("invalid PAN number : "+panNumber);
-} catch(IOException ioException)
+employeeDTO.setEmployeeId("A"+(1000000+resultSet.getInt("employee_id")));
+employeeDTO.setName(resultSet.getString("name").trim());
+employeeDTO.setDesignationCode(resultSet.getInt("designation_code"));
+sqlDateOfBirth=resultSet.getDate("date_of_birth");
+utilDateOfBirth=new java.util.Date(sqlDateOfBirth.getYear(),sqlDateOfBirth.getMonth(),sqlDateOfBirth.getDate());
+employeeDTO.setDateOfBirth(utilDateOfBirth);
+employeeDTO.setBasicSalary(resultSet.getBigDecimal("basic_salary"));
+gender=resultSet.getString("gender");
+if(gender.equals("M"))
 {
-throw new DAOException(ioException.getMessage());
+employeeDTO.setGender(GENDER.MALE);
 }
+if(gender.equals("F"))
+{
+employeeDTO.setGender(GENDER.FEMALE);
+}
+employeeDTO.setIsIndian(resultSet.getBoolean("is_indian"));
+employeeDTO.setPANNumber(resultSet.getString("pan_Number").trim());
+employeeDTO.setAadharCardNumber(resultSet.getString("aadhar_card_Number").trim());
+}
+resultSet.close();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+return employeeDTO;
 }
 
 public EmployeeDTOInterface getByAadharCardNumber(String aadharCardNumber) throws DAOException
@@ -645,71 +695,54 @@ public EmployeeDTOInterface getByAadharCardNumber(String aadharCardNumber) throw
 if(aadharCardNumber==null) throw new DAOException("Invalid Aadhar card number : "+aadharCardNumber);
 aadharCardNumber=aadharCardNumber.trim();
 if(aadharCardNumber.length()==0) throw new DAOException("Invalid Aadhar card number. : aadhar card number length is zero");
-try
-{
-File file=new File(FILE_NAME);
-if(file.exists()==false) throw new DAOException("Invalid aahdar card number : "+aadharCardNumber);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-randomAccessFile.close();
-throw new DAOException("Invalid Aadhar card number : "+aadharCardNumber);
-}
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-EmployeeDTOInterface employeeDTO;
-String fEmployeeId;
-String fName;
-int fDesignationCode;
-Date fDateOfBirth;
-char fGender;
-boolean fIsIndian;
-BigDecimal fBasicSalary;
-String fPANNumber;
-String fAadharCardNumber;
-int x;
-SimpleDateFormat simpleDateFormat;
-simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
-fDateOfBirth=null;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-fEmployeeId=randomAccessFile.readLine();
-fName=randomAccessFile.readLine();
-fDesignationCode=Integer.parseInt(randomAccessFile.readLine());
+EmployeeDTOInterface employeeDTO=null;
 try{
-fDateOfBirth=simpleDateFormat.parse(randomAccessFile.readLine());
-} catch(ParseException parseException)
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select * from employee where aadhar_card_Number=?");
+preparedStatement.setString(1,aadharCardNumber);
+ResultSet resultSet=preparedStatement.executeQuery();
+if(resultSet.next()==false)
 {
-//do nothing
+resultSet.close();
+preparedStatement.close();
+connection.close();
+throw new DAOException("Invalid Aadhar Card Number : "+aadharCardNumber);
 }
-fGender=randomAccessFile.readLine().charAt(0);
-fIsIndian=Boolean.parseBoolean(randomAccessFile.readLine());
-fBasicSalary=new BigDecimal(randomAccessFile.readLine());
-fPANNumber=randomAccessFile.readLine();
-fAadharCardNumber=randomAccessFile.readLine();
-if(fAadharCardNumber.equalsIgnoreCase(aadharCardNumber))
+java.util.Date utilDateOfBirth;
+java.sql.Date sqlDateOfBirth;
+String gender;
+while(resultSet.next())
 {
 employeeDTO=new EmployeeDTO();
-employeeDTO.setEmployeeId(fEmployeeId);
-employeeDTO.setName(fName);
-employeeDTO.setDesignationCode(fDesignationCode);
-employeeDTO.setDateOfBirth(fDateOfBirth);
-employeeDTO.setGender((fGender=='M') ? GENDER.MALE : GENDER.FEMALE);
-employeeDTO.setIsIndian(fIsIndian);
-employeeDTO.setBasicSalary(fBasicSalary);
-employeeDTO.setPANNumber(fPANNumber);
-employeeDTO.setAadharCardNumber(fAadharCardNumber);
-randomAccessFile.close();
-return employeeDTO;
-}
-}
-randomAccessFile.close();
-throw new DAOException("invalid Aadhar card number : "+aadharCardNumber);
-} catch(IOException ioException)
+employeeDTO.setEmployeeId("A"+(1000000+resultSet.getInt("employee_id")));
+employeeDTO.setName(resultSet.getString("name").trim());
+employeeDTO.setDesignationCode(resultSet.getInt("designation_code"));
+sqlDateOfBirth=resultSet.getDate("date_of_birth");
+utilDateOfBirth=new java.util.Date(sqlDateOfBirth.getYear(),sqlDateOfBirth.getMonth(),sqlDateOfBirth.getDate());
+employeeDTO.setDateOfBirth(utilDateOfBirth);
+employeeDTO.setBasicSalary(resultSet.getBigDecimal("basic_salary"));
+gender=resultSet.getString("gender");
+if(gender.equals("M"))
 {
-throw new DAOException(ioException.getMessage());
+employeeDTO.setGender(GENDER.MALE);
 }
+if(gender.equals("F"))
+{
+employeeDTO.setGender(GENDER.FEMALE);
+}
+employeeDTO.setIsIndian(resultSet.getBoolean("is_indian"));
+employeeDTO.setPANNumber(resultSet.getString("pan_Number").trim());
+employeeDTO.setAadharCardNumber(resultSet.getString("aadhar_card_Number").trim());
+}
+resultSet.close();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
+{
+throw new DAOException(sqlException.getMessage());
+}
+return employeeDTO;
 }
 
 public boolean employeeIdExists(String employeeId) throws DAOException
@@ -717,174 +750,116 @@ public boolean employeeIdExists(String employeeId) throws DAOException
 if(employeeId==null) return false;
 employeeId=employeeId.trim();
 if(employeeId.length()==0) return false;
-try
+int actualEmployeeId=0;
+boolean exists=false;
+try{
+actualEmployeeId=Integer.parseInt(employeeId.substring(1))-1000000;
+} catch(Exception exception)
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) throw new DAOException("Invalid employee Id. : "+employeeId);
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
+throw new DAOException("Invalid employee id. : "+employeeId);
+}
+try{
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select gender from employee where employee_id=?");
+preparedStatement.setInt(1,actualEmployeeId);
+ResultSet resultSet=preparedStatement.executeQuery();
+exists=resultSet.next();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
 {
-randomAccessFile.close();
-return false;
+throw new DAOException  (sqlException.getMessage());
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-String fEmployeeId;
-int x;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-fEmployeeId=randomAccessFile.readLine();
-if(fEmployeeId.equalsIgnoreCase(employeeId))
-{
-randomAccessFile.close();
-return true;
+return exists;
 }
-for(x=1;x<=8;x++) randomAccessFile.readLine();
-}
-randomAccessFile.close();
-return false;
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
-}
+
 
 public boolean panNumberExists(String panNumber) throws DAOException
 {
 if(panNumber==null) return false;
 panNumber=panNumber.trim();
 if(panNumber.length()==0) return false;
-try
+boolean exists=false;
+try{
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select gender from employee where pan_Number=?");
+preparedStatement.setString(1,panNumber);
+ResultSet resultSet=preparedStatement.executeQuery();
+exists=resultSet.next();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) return false;	
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-randomAccessFile.close();
-return false;
+throw new DAOException (sqlException.getMessage());
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-EmployeeDTOInterface employeeDTO;
-int x;
-String fPANNumber;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-for(x=1;x<=7;x++) randomAccessFile.readLine();
-fPANNumber=randomAccessFile.readLine();
-randomAccessFile.readLine();
-if(fPANNumber.equalsIgnoreCase(panNumber))
-{
-randomAccessFile.close();
-return true;
+return exists;
 }
-}
-randomAccessFile.close();
-return false;
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
-}
+
 
 public boolean aadharCardNumberExists(String aadharCardNumber) throws DAOException
 {
 if(aadharCardNumber==null) return false;
 aadharCardNumber=aadharCardNumber.trim();
 if(aadharCardNumber.length()==0) return false;
-try
+boolean exists=false;
+try{
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement;
+preparedStatement=connection.prepareStatement("select gender from employee where aadhar_card_Number=?");
+preparedStatement.setString(1,aadharCardNumber);
+ResultSet resultSet=preparedStatement.executeQuery();
+exists=resultSet.next();
+preparedStatement.close();
+connection.close();
+}catch(SQLException sqlException)
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) return false;	
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0)
-{
-randomAccessFile.close();
-return false;
+throw new DAOException (sqlException.getMessage());
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-EmployeeDTOInterface employeeDTO;
-int x;
-String fAadharCardNumber;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-for(x=1;x<=8;x++) randomAccessFile.readLine();
-fAadharCardNumber=randomAccessFile.readLine();
-if(fAadharCardNumber.equalsIgnoreCase(aadharCardNumber))
-{
-randomAccessFile.close();
-return true;
-}
-}
-randomAccessFile.close();
-return false;
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
+return exists;
 }
 
 public int getCount() throws DAOException
 {
+int count=0;
 try
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) return 0;
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0) 
+Connection connection=DAOConnection.getConnection();
+Statement statement=connection.createStatement();
+ResultSet resultSet=statement.executeQuery("select count(*) as cnt from employee");
+resultSet.next();
+count=resultSet.getInt("cnt");
+resultSet.close();
+statement.close();
+connection.close();
+} catch(SQLException sqlException)
 {
-randomAccessFile.close();
-return 0;
+throw new DAOException(sqlException.getMessage());
 }
-randomAccessFile.readLine();
-int recordCount=Integer.parseInt(randomAccessFile.readLine().trim());
-randomAccessFile.close();
-return recordCount;
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
+return count;
 }
 
 public int getCountByDesignation(int designationCode) throws DAOException
 {
 if(new DesignationDAO().codeExists(designationCode)==false) throw new DAOException("Invalid designation code : "+designationCode);
+int count=0;
 try
 {
-File file=new File(FILE_NAME);
-if(file.exists()==false) return 0;
-RandomAccessFile randomAccessFile;
-randomAccessFile=new RandomAccessFile(file,"rw");
-if(randomAccessFile.length()==0) 
+Connection connection=DAOConnection.getConnection();
+PreparedStatement preparedStatement=connection.prepareStatement("Select count(*) as cnt from employee where designation_code=?");
+preparedStatement.setInt(1,designationCode);
+ResultSet resultSet=preparedStatement.executeQuery();
+resultSet.next();
+count=resultSet.getInt("cnt");
+resultSet.close();
+preparedStatement.close();
+connection.close();
+} catch(SQLException sqlException)
 {
-randomAccessFile.close();
-return 0;
+throw new DAOException(sqlException.getMessage());
 }
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-int fDesignationCode;
-int count=0;
-int x;
-while(randomAccessFile.getFilePointer()<randomAccessFile.length())
-{
-randomAccessFile.readLine();
-randomAccessFile.readLine();
-fDesignationCode=Integer.parseInt(randomAccessFile.readLine());
-if(fDesignationCode==designationCode) count++;
-for(x=1;x<=6;x++) randomAccessFile.readLine();
-}
-randomAccessFile.close();
 return count;
-} catch(IOException ioException)
-{
-throw new DAOException(ioException.getMessage());
-}
 }
 
 }

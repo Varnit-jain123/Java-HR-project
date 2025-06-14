@@ -216,6 +216,7 @@ designationSet.remove(dsDesignation);
 } catch(DAOException daoException)
 {
 blException.setGenericException(daoException.getMessage());
+throw blException;
 }
 }
 
