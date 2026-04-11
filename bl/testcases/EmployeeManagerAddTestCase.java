@@ -14,7 +14,7 @@ public static void main(String gg[])
 try{
 String name="Sameer Gupta";
 DesignationInterface designation=new Designation();
-designation.setCode(3);
+designation.setCode(11);
 Date dateOfBirth=new Date();
 boolean isIndian=false;
 BigDecimal basicSalary=new BigDecimal("30000");
